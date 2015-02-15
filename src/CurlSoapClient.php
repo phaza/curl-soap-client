@@ -36,26 +36,22 @@ class CurlSoapClient extends \SoapClient
 	public function __doRequest($request, $location, $action, $version, $one_way = 0) {
 
 		$this->__last_request = $request;
-		$this->logger->debug('Request: '.$request);
-
+        
 		$headers = array(
 			'Connection: Close',
 			'Content-Type: application/soap+xml',
 			sprintf('SOAPAction: "%s"', $action),
 			sprintf('Content-Length: %d', strlen($request))
 		);
+        
+		$this->logger->debug('Request: '.$request, $headers);
 
 		$ch = curl_init($location);
 
-		$options = array(
+		$options = $this->curlOptions + array(
 			CURLOPT_FOLLOWLOCATION => true,
 			CURLOPT_SSL_VERIFYHOST => true,
 			CURLOPT_SSL_VERIFYPEER => true
-		);
-
-		$options += $this->curlOptions;
-
-		$options += array(
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_HTTPHEADER     => $headers,
 			CURLOPT_POSTFIELDS     => $request
@@ -71,7 +67,7 @@ class CurlSoapClient extends \SoapClient
 
 		$output = curl_exec($ch);
 
-		if(isset($tmpl) && is_resource($tmp)) {
+		if(isset($tmp) && is_resource($tmp)) {
 			rewind($tmp);
 			$this->logger->debug(stream_get_contents($tmp));
 			fclose($tmp);
