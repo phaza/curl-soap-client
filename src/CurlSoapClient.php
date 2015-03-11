@@ -10,11 +10,13 @@ class CurlSoapClient extends \SoapClient
 
 	protected $logger;
 	protected $curlOptions;
+	protected $headers = [];
 
-	function __construct($wsdl, array $options, array $curlOptions, Logger $logger)
+	function __construct($wsdl, array $options, array $curlOptions, Logger $logger, $headers = [])
 	{
-		$this->logger = $logger;
+		$this->logger	   = $logger;
 		$this->curlOptions = $curlOptions;
+		$this->headers	   = $headers;
 
 		$this->logger->debug($wsdl, array('options' => $options, 'curl Options' => $curlOptions));
 
@@ -36,14 +38,21 @@ class CurlSoapClient extends \SoapClient
 	public function __doRequest($request, $location, $action, $version, $one_way = 0) {
 
 		$this->__last_request = $request;
-        
-		$headers = array(
-			'Connection: Close',
-			'Content-Type: application/soap+xml',
+
+		if(empty($this->headers)) {
+			$headers = array( 'Connection: Close', 'Content-Type: application/soap+xml' );
+		}
+		else {
+			$headers = $this->headers;
+		}
+
+		$soapHeaders = array(
 			sprintf('SOAPAction: "%s"', $action),
 			sprintf('Content-Length: %d', strlen($request))
 		);
-        
+
+		$headers = array_merge($headers, $soapHeaders);
+
 		$this->logger->debug('Request: '.$request, $headers);
 
 		$ch = curl_init($location);
